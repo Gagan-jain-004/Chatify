@@ -1,6 +1,8 @@
+import cloudinary from "../lib/cloudinary.js";
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs"
+
 
 export const signup = async(req,res)=>{
     // extract data from body 
@@ -91,8 +93,6 @@ export const login = async(req,res)=>{
 };
 
 
-
-
 export const logout = (req,res)=>{
     
     try{
@@ -105,3 +105,43 @@ export const logout = (req,res)=>{
     }
 
 };
+
+export const updateProfile = async(req,res)=>{
+
+    try{
+        const {profilePic} = req.body;
+        const userId = req.user._id;              //this get via token becoz of protect route (see last line of protectroute)
+        
+        if(!profilePic){
+            return res.status(400).json({message: "Profile pic is required"});
+        }
+        
+        const uploadResponse =await cloudinary.uploader.upload(profilePic);
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,                                            // finding user by id in db 
+            {profilePic: uploadResponse.secure_url},          //cloudinary way of uploadresponse in mongodb
+            {new:true}      // this updated the updated details in dba
+        );
+
+        res.status(200).json(updatedUser);
+
+    }catch(error){
+        console.log("error in update profile: ",error.message);
+        res.status(500).json({message: "Internal Server error"})
+    }
+
+
+};
+
+
+export const checkAuth = (req,res)=>{
+
+    try{
+        res.status(200).json(req.user);
+
+    }catch(error){
+        console.log("Error in checkAuth controller",error.message);
+        res.status(500).json({message:"Internal  Server Error"});
+    }
+
+}
