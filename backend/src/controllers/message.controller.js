@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Message from "../models/message.model.js"
 
 export const getUsersForSidebar =async(req,res)=>{
  
@@ -11,6 +12,27 @@ export const getUsersForSidebar =async(req,res)=>{
     } catch (error) {
         console.error("Error in getUsersForSidebar: ",error.message);
         res.status(500).json({error:"Internal Server error "})
+        
+    }
+}
+
+
+export const getMessages = async(req,res)=>{
+    try {
+        const {id:userToChatId} = req.params;            // params is route parameter (go see route has id added in route when u click on of specif chat of user that person id get to route then we fetch details 
+        const myId = req.user._id;
+
+        const messages= await Message.find({                     // find those message the one is sent to selected user and that user to me 
+            $or:[
+                {senderId: myId,receiverId: userToChatId},
+                {senderId: userToChatId , receiverId: myId},
+            ],
+        });
+
+        res.status(200).json(messages);
+    } catch (error) {
+        console.log("Error in getMessages controller: ", error.message);
+        res.status(500),json({error: "Internal server error"});
         
     }
 }
